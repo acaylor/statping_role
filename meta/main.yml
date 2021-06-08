@@ -1,0 +1,9 @@
+galaxy_info:
+  author: acaylor
+  description: prepare statping host
+
+  license: BSD
+
+  min_ansible_version: 2.10
+
+  galaxy_tags: []

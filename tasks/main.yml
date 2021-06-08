@@ -1,0 +1,51 @@
+---
+- name: configure docker
+  include_role:
+    name: geerlingguy.docker
+- name: check for python docker sdk
+  include_role:
+    name: geerlingguy.pip
+- name: add proxy user
+  user:
+    name: proxy
+    create_home: yes
+    groups: docker
+    append: yes
+    shell: /bin/bash
+- name: create directory for compose files
+  file:
+    path: /home/proxy/containers
+    state: directory
+    owner: proxy
+    group: docker
+    mode: '751'
+- name: create directory for statping
+  file:
+    path: /home/proxy/containers/statping
+    state: directory
+    mode: '751'
+    owner: proxy
+    group: docker
+- name: copy statping compose template
+  template:
+    src: statping.j2
+    dest: /home/proxy/containers/statping/docker-compose.yml
+    owner: proxy
+    group: docker
+    mode: '640'
+- name: script to update containers
+  template:
+    src: update-containers.j2
+    dest: /home/proxy/containers/update-containers.sh
+    owner: proxy
+    group: docker
+    mode: '751'
+- name: create cron job to update the containers
+  cron:
+    name: update containers
+    minute: "0"
+    hour: "4"
+    job: /home/proxy/containers/update-containers.sh
+    cron_file: ansible_container_update
+    user: proxy
+  notify: compose

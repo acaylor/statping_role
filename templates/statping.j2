@@ -1,0 +1,79 @@
+version: '2.3'
+
+services:
+
+  nginx:
+    container_name: nginx
+    image: jwilder/nginx-proxy
+    ports:
+      - 0.0.0.0:80:80
+      - 0.0.0.0:443:443
+    labels:
+      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
+    networks:
+      - internet
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./statup/nginx/certs:/etc/nginx/certs:ro
+      - ./statup/nginx/vhost:/etc/nginx/vhost.d
+      - ./statup/nginx/html:/usr/share/nginx/html:ro
+      - ./statup/nginx/dhparam:/etc/nginx/dhparam
+    environment:
+      DEFAULT_HOST: "{{ statping_host }}"
+
+  letsencrypt:
+    container_name: letsencrypt
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    networks:
+      - internet
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./statup/nginx/certs:/etc/nginx/certs
+      - ./statup/nginx/vhost:/etc/nginx/vhost.d
+      - ./statup/nginx/html:/usr/share/nginx/html
+      - ./statup/nginx/dhparam:/etc/nginx/dhparam
+
+  statup:
+    container_name: statup
+    image: statping/statping:latest
+    restart: always
+    networks:
+      - internet
+      - database
+    depends_on:
+      - postgres
+    volumes:
+      - ./statup/app:/app
+    environment:
+      VIRTUAL_HOST: "{{ statping_host }}"
+      VIRTUAL_PORT: 8080
+      LETSENCRYPT_HOST: "{{ statping_host }}"
+      LETSENCRYPT_EMAIL: "{{ admin_email }}"
+      DB_CONN: postgres
+      DB_HOST: postgres
+      DB_USER: statup
+      DB_PASS: "{{ statping_db }}"
+      DB_DATABASE: statup
+      NAME: SSL Example
+      DESCRIPTION: This Status Status Page should be running "{{ statping_host }}" with SSL.
+
+  postgres:
+    container_name: postgres
+    image: postgres:10
+    restart: always
+    networks:
+      - database
+    volumes:
+      - ./statup/postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: "{{ statping_db }}"
+      POSTGRES_USER: statup
+      POSTGRES_DB: statup
+
+networks:
+  internet:
+    driver: bridge
+  database:
+    driver: bridge
