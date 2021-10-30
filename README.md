@@ -6,9 +6,9 @@ This will install and configure docker and a few containers to run statping.
 Role Variables
 --------------
 
-- statping_db
-- statping_host
-- admin_email
+- statping_db: postgres password
+- statping_host: internet facing hostname
+- admin_email: email to provide to let's encrypt (free SSL/TLS certificates)
 
 Dependencies
 ------------
@@ -37,6 +37,11 @@ Example Playbook
   roles:
     - statping_role
 ```
+
+Supported platforms
+--------------------
+
+- Ubuntu 20.04 LTS x86_64
 
 License
 -------

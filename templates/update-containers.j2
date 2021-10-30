@@ -1,5 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
 cd /home/proxy/containers/statping
 docker-compose pull
 docker-compose up -d
+yes | docker system prune
+exit 0
